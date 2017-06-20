@@ -1,0 +1,19 @@
+#! /usr/bin/env python
+from __future__ import division,print_function
+import os
+
+
+api_dir = './api/'
+
+def main():
+    try:
+        api_array = os.listdir(api_dir)
+        print('API found: {0} in {1}'.format(api_array,api_dir))
+    except OSError:
+        print('No API found in {0}! Connect modular device and run save_device_api.'.format(api_dir))
+        return
+    print('testing')
+
+if __name__ == '__main__':
+    main()
+
