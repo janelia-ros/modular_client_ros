@@ -1,10 +1,12 @@
 #! /usr/bin/env python
 from __future__ import division, print_function
 import os
+import json
 from jinja2 import Environment, FileSystemLoader
 
 
-api_dir = './api/'
+device_dir = 'device'
+api_dir = os.path.join(device_dir,'api')
 
 def main():
     api_array = []
@@ -13,15 +15,23 @@ def main():
     except OSError:
         pass
     if len(api_array) > 0:
-        print('API found: {0} in {1}'.format(api_array,api_dir))
+        print('\nAPI found: {0} in {1}\n'.format(api_array,api_dir))
     else:
-        print('No API found in {0}! Connect modular device and run save_device_api.'.format(api_dir))
+        print('\nNo API found in {0}! Connect modular device and run save_device_api.\n'.format(api_dir))
         return
     env = Environment(
         loader=FileSystemLoader('./templates'),
     )
-    cmake_template = env.get_template('CMakeLists.txt')
-    print(cmake_template.render())
+
+    # CMakeLists.txt
+    filename = 'CMakeLists.txt'
+    template = env.get_template(filename)
+
+    template_render = template.render()
+
+    print('Writing ' + filename + '.\n')
+    with open(filename,'w') as fh:
+        fh.write(template_render)
 
 if __name__ == '__main__':
     main()
