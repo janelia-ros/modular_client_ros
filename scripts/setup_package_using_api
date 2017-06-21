@@ -1,6 +1,7 @@
 #! /usr/bin/env python
-from __future__ import division,print_function
+from __future__ import division, print_function
 import os
+from jinja2 import Environment, FileSystemLoader
 
 
 api_dir = './api/'
@@ -16,7 +17,11 @@ def main():
     else:
         print('No API found in {0}! Connect modular device and run save_device_api.'.format(api_dir))
         return
-    print('testing')
+    env = Environment(
+        loader=FileSystemLoader('./templates'),
+    )
+    cmake_template = env.get_template('CMakeLists.txt')
+    print(cmake_template.render())
 
 if __name__ == '__main__':
     main()
