@@ -6,10 +6,14 @@ import os
 api_dir = './api/'
 
 def main():
+    api_array = []
     try:
         api_array = os.listdir(api_dir)
-        print('API found: {0} in {1}'.format(api_array,api_dir))
     except OSError:
+        pass
+    if len(api_array) > 0:
+        print('API found: {0} in {1}'.format(api_array,api_dir))
+    else:
         print('No API found in {0}! Connect modular device and run save_device_api.'.format(api_dir))
         return
     print('testing')

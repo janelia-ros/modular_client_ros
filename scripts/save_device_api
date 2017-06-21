@@ -26,7 +26,7 @@ def main():
             print("Removing old API files: {0} from {1}...\n".format(api_array,api_dir))
             for api in api_array:
                 os.remove(os.path.join(api_dir,api))
-    except OSError:
+gi    except OSError:
         pass
     print("Saving api...")
     dev.save_api()
