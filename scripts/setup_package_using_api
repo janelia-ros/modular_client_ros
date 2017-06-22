@@ -63,8 +63,6 @@ def main():
             print('Writing ' + message_filename)
             with open(message_filename,'w') as fh:
                 fh.write(template_render)
-                print(template_render)
-    print(message_filenames)
 
     render_context['message_filenames'] = message_filenames
 
