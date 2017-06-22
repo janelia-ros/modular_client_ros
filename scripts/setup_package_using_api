@@ -48,7 +48,6 @@ def main():
         api = {}
         with open(os.path.join(api_dir,api_filename),'r') as fh:
             api = json.loads(fh.read())
-            # api = json.loads(fh.read(),object_hook=json_decode_dict)
         if 'result' in api:
             api = api['result']
         for parameter in api['parameters']:
@@ -64,67 +63,21 @@ def main():
             print('Writing ' + message_filename)
             with open(message_filename,'w') as fh:
                 fh.write(template_render)
+                print(template_render)
     print(message_filenames)
+
+    render_context['message_filenames'] = message_filenames
 
     # CMakeLists.txt
     template_filename = 'CMakeLists.txt'
     template = env.get_template(template_filename)
 
-    template_render = template.render()
+    template_render = template.render(render_context)
 
     print('Writing ' + template_filename + '.\n')
     with open(template_filename,'w') as fh:
         fh.write(template_render)
 
-# def json_decode_dict(data):
-#     '''
-#     Object hook for decoding dictionaries from serialized json data. Ensures that
-#     all strings are unpacked as str objects rather than unicode.
-#     '''
-#     rv = {}
-#     try:
-#         for key, value in data.iteritems():
-#             if isinstance(key, unicode):
-#                 key = key.encode('utf-8')
-#             if isinstance(value, unicode):
-#                 value = value.encode('utf-8')
-#             elif isinstance(value, list):
-#                 value = json_decode_list(value)
-#             elif isinstance(value, dict):
-#                 value = json_decode_dict(value)
-#             rv[key] = value
-#     except (AttributeError,NameError):
-#         for key, value in data.items():
-#             if isinstance(value, list):
-#                 value = json_decode_list(value)
-#             elif isinstance(value, dict):
-#                 value = json_decode_dict(value)
-#             rv[key] = value
-#     return rv
-
-# def json_decode_list(data):
-#     '''
-#     Object hook for decoding lists from serialized json data. Ensures that
-#     all strings are unpacked as str objects rather than unicode.
-#     '''
-#     rv = []
-#     try:
-#         for item in data:
-#             if isinstance(item, unicode):
-#                 item = item.encode('utf-8')
-#             elif isinstance(item, list):
-#                 item = json_decode_list(item)
-#             elif isinstance(item, dict):
-#                 item = json_decode_dict(item)
-#             rv.append(item)
-#     except NameError:
-#         for item in data:
-#             if isinstance(item, list):
-#                 item = json_decode_list(item)
-#             elif isinstance(item, dict):
-#                 item = json_decode_dict(item)
-#             rv.append(item)
-#     return rv
 
 if __name__ == '__main__':
     main()
