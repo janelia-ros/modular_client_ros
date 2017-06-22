@@ -42,8 +42,23 @@ def main():
     except OSError:
         pass
 
+    try:
+        os.makedirs(service_dir)
+    except OSError:
+        pass
+    try:
+        service_array = os.listdir(service_dir)
+        if len(service_array) > 0:
+            print("Removing old service files: {0} from {1}...\n".format(service_array,service_dir))
+            for service in service_array:
+                os.remove(os.path.join(service_dir,service))
+    except OSError:
+        pass
+
     template_filename = 'msg.txt'
-    template = env.get_template(template_filename)
+    message_template = env.get_template(template_filename)
+    template_filename = 'srv.txt'
+    service_template = env.get_template(template_filename)
     for api_filename in api_array:
         api = {}
         with open(os.path.join(api_dir,api_filename),'r') as fh:
@@ -53,18 +68,32 @@ def main():
         for parameter in api['parameters']:
             try:
                 array_element_type = parameter.pop('array_element_type')
-                parameter["type"] = array_element_type + "[]"
+                parameter['type'] = array_element_type + '[]'
             except KeyError:
                 pass
-            template_render = template.render(parameter)
+            message_template_render = message_template.render(parameter)
             message_filename = parameter['name'] + '.msg'
             message_filenames.append(message_filename)
             message_filename = os.path.join(message_dir,message_filename)
             print('Writing ' + message_filename)
             with open(message_filename,'w') as fh:
-                fh.write(template_render)
+                fh.write(message_template_render)
+        for function in api['functions']:
+            try:
+                array_element_type = function['result_info'].pop('array_element_type')
+                function['result_info']['type'] = array_element_type + '[]'
+            except KeyError:
+                pass
+            service_template_render = service_template.render(function)
+            service_filename = function['name'] + '.srv'
+            service_filenames.append(service_filename)
+            service_filename = os.path.join(service_dir,service_filename)
+            print('Writing ' + service_filename)
+            with open(service_filename,'w') as fh:
+                fh.write(service_template_render)
 
     render_context['message_filenames'] = message_filenames
+    render_context['service_filenames'] = service_filenames
 
     # CMakeLists.txt
     template_filename = 'CMakeLists.txt'

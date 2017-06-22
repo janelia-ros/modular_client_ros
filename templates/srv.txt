@@ -1,0 +1,7 @@
+{% for parameter in parameters -%}
+{{ parameter }} {{ parameter }}
+{% endfor -%}
+---
+{% if result_info is defined -%}
+{{ result_info['type']|replace("long","int64")|replace("double","float64")|replace("null","string")|replace("object","string")|replace("any","string") }} result
+{% endif %}
