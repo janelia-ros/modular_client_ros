@@ -3,6 +3,7 @@ from __future__ import division, print_function
 import os
 import json
 from jinja2 import Environment, FileSystemLoader
+import inflection
 
 
 device_dir = 'device'
@@ -72,7 +73,7 @@ def main():
             except KeyError:
                 pass
             message_template_render = message_template.render(parameter)
-            message_filename = parameter['name'] + '.msg'
+            message_filename = inflection.camelize(parameter['name'],True) + '.msg'
             message_filenames.append(message_filename)
             message_filename = os.path.join(message_dir,message_filename)
             print('Writing ' + message_filename)
@@ -84,8 +85,14 @@ def main():
                 function['result_info']['type'] = array_element_type + '[]'
             except KeyError:
                 pass
+            function['messages'] = []
+            for parameter in function['parameters']:
+                message = {}
+                message['name'] = parameter
+                message['type'] = inflection.camelize(parameter,True)
+                function['messages'].append(message)
             service_template_render = service_template.render(function)
-            service_filename = function['name'] + '.srv'
+            service_filename = inflection.camelize(function['name']) + '.srv'
             service_filenames.append(service_filename)
             service_filename = os.path.join(service_dir,service_filename)
             print('Writing ' + service_filename)

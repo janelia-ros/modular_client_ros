@@ -1,5 +1,5 @@
-{% for parameter in parameters -%}
-{{ parameter }} {{ parameter }}
+{% for message in messages -%}
+{{ message['type'] }} {{ message['name'] }}
 {% endfor -%}
 ---
 {% if result_info is defined -%}
