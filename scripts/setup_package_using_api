@@ -7,6 +7,12 @@ from jinja2 import Environment, FileSystemLoader
 
 device_dir = 'device'
 api_dir = os.path.join(device_dir,'api')
+message_dir = 'msg'
+service_dir = 'srv'
+
+render_context = {}
+message_filenames = []
+service_filenames = []
 
 def main():
     api_array = []
@@ -23,15 +29,102 @@ def main():
         loader=FileSystemLoader('./templates'),
     )
 
+    try:
+        os.makedirs(message_dir)
+    except OSError:
+        pass
+    try:
+        message_array = os.listdir(message_dir)
+        if len(message_array) > 0:
+            print("Removing old message files: {0} from {1}...\n".format(message_array,message_dir))
+            for message in message_array:
+                os.remove(os.path.join(message_dir,message))
+    except OSError:
+        pass
+
+    template_filename = 'msg.txt'
+    template = env.get_template(template_filename)
+    for api_filename in api_array:
+        api = {}
+        with open(os.path.join(api_dir,api_filename),'r') as fh:
+            api = json.loads(fh.read())
+            # api = json.loads(fh.read(),object_hook=json_decode_dict)
+        if 'result' in api:
+            api = api['result']
+        for parameter in api['parameters']:
+            try:
+                array_element_type = parameter.pop('array_element_type')
+                parameter["type"] = array_element_type + "[]"
+            except KeyError:
+                pass
+            template_render = template.render(parameter)
+            message_filename = parameter['name'] + '.msg'
+            message_filenames.append(message_filename)
+            message_filename = os.path.join(message_dir,message_filename)
+            print('Writing ' + message_filename)
+            with open(message_filename,'w') as fh:
+                fh.write(template_render)
+    print(message_filenames)
+
     # CMakeLists.txt
-    filename = 'CMakeLists.txt'
-    template = env.get_template(filename)
+    template_filename = 'CMakeLists.txt'
+    template = env.get_template(template_filename)
 
     template_render = template.render()
 
-    print('Writing ' + filename + '.\n')
-    with open(filename,'w') as fh:
+    print('Writing ' + template_filename + '.\n')
+    with open(template_filename,'w') as fh:
         fh.write(template_render)
+
+# def json_decode_dict(data):
+#     '''
+#     Object hook for decoding dictionaries from serialized json data. Ensures that
+#     all strings are unpacked as str objects rather than unicode.
+#     '''
+#     rv = {}
+#     try:
+#         for key, value in data.iteritems():
+#             if isinstance(key, unicode):
+#                 key = key.encode('utf-8')
+#             if isinstance(value, unicode):
+#                 value = value.encode('utf-8')
+#             elif isinstance(value, list):
+#                 value = json_decode_list(value)
+#             elif isinstance(value, dict):
+#                 value = json_decode_dict(value)
+#             rv[key] = value
+#     except (AttributeError,NameError):
+#         for key, value in data.items():
+#             if isinstance(value, list):
+#                 value = json_decode_list(value)
+#             elif isinstance(value, dict):
+#                 value = json_decode_dict(value)
+#             rv[key] = value
+#     return rv
+
+# def json_decode_list(data):
+#     '''
+#     Object hook for decoding lists from serialized json data. Ensures that
+#     all strings are unpacked as str objects rather than unicode.
+#     '''
+#     rv = []
+#     try:
+#         for item in data:
+#             if isinstance(item, unicode):
+#                 item = item.encode('utf-8')
+#             elif isinstance(item, list):
+#                 item = json_decode_list(item)
+#             elif isinstance(item, dict):
+#                 item = json_decode_dict(item)
+#             rv.append(item)
+#     except NameError:
+#         for item in data:
+#             if isinstance(item, list):
+#                 item = json_decode_list(item)
+#             elif isinstance(item, dict):
+#                 item = json_decode_dict(item)
+#             rv.append(item)
+#     return rv
 
 if __name__ == '__main__':
     main()

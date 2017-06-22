@@ -53,7 +53,9 @@ git clone https://github.com/janelia-ros/modular_client_ros.git
 sudo apt-get install virtualenv
 mkdir ~/virtualenvs
 cd ~/virtualenvs
-virtualenv modular_client
-source ~/virtualenvs/modular_client/bin/activate
+virtualenv modular_client_ros
+source ~/virtualenvs/modular_client_ros/bin/activate
+pip install ipython --upgrade
 pip install modular_client
+pip install jinja2
 ```

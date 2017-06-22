@@ -1,0 +1,1 @@
+{{type|replace("long","int64")|replace("double","float64")|replace("any","string")}} {{name}}
