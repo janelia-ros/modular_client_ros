@@ -5,6 +5,7 @@ msg_gen/
 srv_gen/
 msg/
 srv/
+nodes/
 device/
 
 CMakeLists.txt

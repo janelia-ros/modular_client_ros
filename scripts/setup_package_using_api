@@ -10,8 +10,8 @@ device_dir = 'device'
 api_dir = os.path.join(device_dir,'api')
 message_dir = 'msg'
 service_dir = 'srv'
+node_dir = 'nodes'
 
-render_context = {}
 message_filenames = []
 service_filenames = []
 
@@ -56,6 +56,20 @@ def main():
     except OSError:
         pass
 
+    try:
+        os.makedirs(node_dir)
+    except OSError:
+        pass
+    try:
+        node_array = os.listdir(node_dir)
+        if len(node_array) > 0:
+            print("Removing old node files: {0} from {1}...\n".format(node_array,node_dir))
+            for node in node_array:
+                os.remove(os.path.join(node_dir,node))
+    except OSError:
+        pass
+
+    # msg and srv
     template_filename = 'msg.txt'
     message_template = env.get_template(template_filename)
     template_filename = 'srv.txt'
@@ -99,10 +113,23 @@ def main():
             with open(service_filename,'w') as fh:
                 fh.write(service_template_render)
 
+    # nodes
+    render_context = {}
+    nodename = 'testing'
+    render_context['nodename'] = nodename
+    template_filename = 'node.txt'
+    node_template = env.get_template(template_filename)
+    node_template_render = node_template.render(render_context)
+    node_filename = os.path.join(node_dir,nodename+'.py')
+    print('Writing ' + node_filename)
+    with open(node_filename,'w') as fh:
+        fh.write(node_template_render)
+
+    # CMakeLists.txt
+    render_context = {}
     render_context['message_filenames'] = message_filenames
     render_context['service_filenames'] = service_filenames
 
-    # CMakeLists.txt
     template_filename = 'CMakeLists.txt'
     template = env.get_template(template_filename)
 
