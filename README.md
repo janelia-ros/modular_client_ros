@@ -23,7 +23,11 @@ rosservice list
 ```
 
 ```shell
-rosservice call /play_tone 
+rosservice call /audio_controller/audio_controller/play_tone 5000 ALL
+```
+
+```shell
+rosservice call /audio_controller/audio_controller/stop
 ```
 
 ## Setup ROS Package to Interface to a Specific Modular Device

@@ -107,6 +107,7 @@ def main():
                 function_parameter = {}
                 function_parameter['name'] = parameter
                 function_parameter['type'] = parameters[parameter]['type']
+                function_parameter['message_type'] = parameters[parameter]['message_type']
                 try:
                     function_parameter['units'] = parameters[parameter]['units']
                 except KeyError:
@@ -114,30 +115,35 @@ def main():
                 function_parameters.append(function_parameter)
             function_copy['parameters'] = function_parameters
             service_template_render = service_template.render(function_copy)
-            service_name = inflection.camelize(function_copy['name'],True)
-            service_filename = service_name + '.srv'
+            service_name = inflection.underscore(function_copy['name'])
+            function_copy['service_name'] = service_name
+            service_class = inflection.camelize(function_copy['name'],True)
+            function_copy['service_class'] = service_class
+            service_filename = service_class + '.srv'
             service_filenames.append(service_filename)
             service_filename = os.path.join(service_dir,service_filename)
             print('Writing ' + service_filename)
             with open(service_filename,'w') as fh:
                 fh.write(service_template_render)
+            firmware_name = api_filename.replace('.json','')
+            function_copy['firmware_name'] = inflection.underscore(firmware_name)
             functions.append(function_copy)
 
     # print(json.dumps(parameters,indent=2))
-    print(json.dumps(functions,indent=2))
+    # print(json.dumps(functions,indent=2))
     # nodes
     with open(os.path.join(device_dir,device_id_filename),'r') as fh:
         device_id = json.loads(fh.read())
     if 'result' in device_id:
         device_id = device_id['result']
-    nodename = device_id['name']
+    node_name = device_id['name']
     render_context = {}
-    render_context['nodename'] = nodename
+    render_context['node_name'] = node_name
     render_context['functions'] = functions
     template_filename = 'node.txt'
     node_template = env.get_template(template_filename)
     node_template_render = node_template.render(render_context)
-    node_filename = os.path.join(node_dir,nodename+'.py')
+    node_filename = os.path.join(node_dir,node_name+'.py')
     print('Writing ' + node_filename)
     with open(node_filename,'w') as fh:
         fh.write(node_template_render)

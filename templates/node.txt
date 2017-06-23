@@ -10,17 +10,26 @@ from modular_client import ModularClient
 
 dev = ModularClient()
 
-def handle_play_tone(request):
-    print(request)
-    response = dev.play_tone(request.frequency,request.speaker)
-    return PlayToneResponse()
+{% for function in functions %}
+def handle_{{ function['service_name']}}(request):
+    response = dev.{{ function['service_name']}}({% for parameter in function['parameters'] %}request.{{ parameter['name'] }},{% endfor %})
+{% if function['result_info'] is defined %}
+    return {{ function['service_class'] }}Response(response)
+{% else %}
+    return {{ function['service_class'] }}Response()
+{% endif %}
+{% endfor %}
 
-def {{ nodename }}():
-    rospy.init_node('{{ nodename }}')
-    s = rospy.Service('~play_tone', PlayTone, handle_play_tone)
-    print("{{ nodename }} running.")
+def {{ node_name }}():
+    rospy.init_node('{{ node_name }}')
+
+{% for function in functions %}
+    rospy.Service('~{{ function["firmware_name"] }}/{{ function["service_name"] }}', {{ function['service_class'] }}, handle_{{ function['service_name']}})
+{% endfor %}
+
+    print("{{ node_name }} running.")
     rospy.spin()
 
 if __name__ == "__main__":
-    {{ nodename }}()
+    {{ node_name }}()
 
