@@ -1,2 +1,0 @@
-{{ type|replace("long","int64")|replace("double","float64")|replace("object","string")|replace("any","string") }} data {%- if units is defined %} # units: {{ units }}{% endif %}
-

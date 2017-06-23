@@ -4,44 +4,32 @@ import os
 import json
 from jinja2 import Environment, FileSystemLoader
 import inflection
+import copy
 
 
 device_dir = 'device'
 api_dir = os.path.join(device_dir,'api')
-message_dir = 'msg'
 service_dir = 'srv'
 node_dir = 'nodes'
+device_id_filename = 'device_id.json'
 
 message_filenames = []
 service_filenames = []
 
-def main():
-    api_array = []
-    try:
-        api_array = os.listdir(api_dir)
-    except OSError:
-        pass
-    if len(api_array) > 0:
-        print('\nAPI found: {0} in {1}\n'.format(api_array,api_dir))
-    else:
-        print('\nNo API found in {0}! Connect modular device and run save_device_api.\n'.format(api_dir))
-        return
-    env = Environment(
-        loader=FileSystemLoader('./templates'),
-    )
 
-    try:
-        os.makedirs(message_dir)
-    except OSError:
-        pass
-    try:
-        message_array = os.listdir(message_dir)
-        if len(message_array) > 0:
-            print("Removing old message files: {0} from {1}...\n".format(message_array,message_dir))
-            for message in message_array:
-                os.remove(os.path.join(message_dir,message))
-    except OSError:
-        pass
+def initialize_directories():
+    # try:
+    #     os.makedirs(message_dir)
+    # except OSError:
+    #     pass
+    # try:
+    #     message_array = os.listdir(message_dir)
+    #     if len(message_array) > 0:
+    #         print("Removing old message files: {0} from {1}...\n".format(message_array,message_dir))
+    #         for message in message_array:
+    #             os.remove(os.path.join(message_dir,message))
+    # except OSError:
+    #     pass
 
     try:
         os.makedirs(service_dir)
@@ -69,11 +57,28 @@ def main():
     except OSError:
         pass
 
-    # msg and srv
-    template_filename = 'msg.txt'
-    message_template = env.get_template(template_filename)
+def main():
+    api_array = []
+    try:
+        api_array = os.listdir(api_dir)
+    except OSError:
+        pass
+    if len(api_array) > 0:
+        print('\nAPI found: {0} in {1}\n'.format(api_array,api_dir))
+    else:
+        print('\nNo API found in {0}! Connect modular device and run save_device_api.\n'.format(api_dir))
+        return
+    env = Environment(
+        loader=FileSystemLoader('./templates'),
+    )
+
+    initialize_directories()
+
+    # srv
     template_filename = 'srv.txt'
     service_template = env.get_template(template_filename)
+    parameters = {}
+    functions = []
     for api_filename in api_array:
         api = {}
         with open(os.path.join(api_dir,api_filename),'r') as fh:
@@ -81,42 +86,54 @@ def main():
         if 'result' in api:
             api = api['result']
         for parameter in api['parameters']:
+            parameter_copy = copy.copy(parameter)
+            parameter_name = parameter_copy.pop('name')
             try:
-                array_element_type = parameter.pop('array_element_type')
-                parameter['type'] = array_element_type + '[]'
+                array_element_type = parameter_copy['array_element_type']
+                parameter_copy['message_type'] = array_element_type + '[]'
             except KeyError:
-                pass
-            message_template_render = message_template.render(parameter)
-            message_filename = inflection.camelize(parameter['name'],True) + '.msg'
-            message_filenames.append(message_filename)
-            message_filename = os.path.join(message_dir,message_filename)
-            print('Writing ' + message_filename)
-            with open(message_filename,'w') as fh:
-                fh.write(message_template_render)
+                parameter_copy['message_type'] = parameter_copy['type']
+            parameters[parameter_name] = parameter_copy
         for function in api['functions']:
-            try:
-                array_element_type = function['result_info'].pop('array_element_type')
-                function['result_info']['type'] = array_element_type + '[]'
-            except KeyError:
-                pass
-            function['messages'] = []
+            function_copy = copy.copy(function)
+            if 'result_info' in function_copy:
+                try:
+                    array_element_type = function_copy['result_info']['array_element_type']
+                    function_copy['result_info']['message_type'] = array_element_type + '[]'
+                except KeyError:
+                    function_copy['result_info']['message_type'] = function_copy['result_info']['type']
+            function_parameters = []
             for parameter in function['parameters']:
-                message = {}
-                message['name'] = parameter
-                message['type'] = inflection.camelize(parameter,True)
-                function['messages'].append(message)
-            service_template_render = service_template.render(function)
-            service_filename = inflection.camelize(function['name']) + '.srv'
+                function_parameter = {}
+                function_parameter['name'] = parameter
+                function_parameter['type'] = parameters[parameter]['type']
+                try:
+                    function_parameter['units'] = parameters[parameter]['units']
+                except KeyError:
+                    pass
+                function_parameters.append(function_parameter)
+            function_copy['parameters'] = function_parameters
+            service_template_render = service_template.render(function_copy)
+            service_name = inflection.camelize(function_copy['name'],True)
+            service_filename = service_name + '.srv'
             service_filenames.append(service_filename)
             service_filename = os.path.join(service_dir,service_filename)
             print('Writing ' + service_filename)
             with open(service_filename,'w') as fh:
                 fh.write(service_template_render)
+            functions.append(function_copy)
 
+    # print(json.dumps(parameters,indent=2))
+    print(json.dumps(functions,indent=2))
     # nodes
+    with open(os.path.join(device_dir,device_id_filename),'r') as fh:
+        device_id = json.loads(fh.read())
+    if 'result' in device_id:
+        device_id = device_id['result']
+    nodename = device_id['name']
     render_context = {}
-    nodename = 'testing'
     render_context['nodename'] = nodename
+    render_context['functions'] = functions
     template_filename = 'node.txt'
     node_template = env.get_template(template_filename)
     node_template_render = node_template.render(render_context)
@@ -124,6 +141,7 @@ def main():
     print('Writing ' + node_filename)
     with open(node_filename,'w') as fh:
         fh.write(node_template_render)
+    os.chmod(node_filename,0o755)
 
     # CMakeLists.txt
     render_context = {}
@@ -135,7 +153,7 @@ def main():
 
     template_render = template.render(render_context)
 
-    print('Writing ' + template_filename + '.\n')
+    print('Writing ' + template_filename + '\n')
     with open(template_filename,'w') as fh:
         fh.write(template_render)
 

@@ -1,7 +1,7 @@
-{% for message in messages -%}
-{{ message['type'] }} {{ message['name'] }}
+{% for parameter in parameters -%}
+{{ parameter['message_type']|replace("long","int64")|replace("double","float64")|replace("object","string")|replace("any","string") }} {{ parameter['name'] }} {%- if parameter['units'] is defined %} # units: {{ parameter['units'] }}{% endif %}
 {% endfor -%}
 ---
 {% if result_info is defined -%}
-{{ result_info['type']|replace("long","int64")|replace("double","float64")|replace("null","string")|replace("object","string")|replace("any","string") }} result
+{{ result_info['message_type']|replace("long","int64")|replace("double","float64")|replace("null","string")|replace("object","string")|replace("any","string") }} result
 {% endif %}

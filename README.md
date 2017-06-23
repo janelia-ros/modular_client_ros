@@ -8,6 +8,24 @@ License:
 
     BSD
 
+## Running
+
+```shell
+roscore
+```
+
+```shell
+rosrun modular_client_ros audio_controller.py
+```
+
+```shell
+rosservice list
+```
+
+```shell
+rosservice call /play_tone 
+```
+
 ## Setup ROS Package to Interface to a Specific Modular Device
 
 ```shell
@@ -50,12 +68,7 @@ git clone https://github.com/janelia-ros/modular_client_ros.git
 ### Install Python Dependencies
 
 ```shell
-sudo apt-get install virtualenv
-mkdir ~/virtualenvs
-cd ~/virtualenvs
-virtualenv modular_client_ros
-source ~/virtualenvs/modular_client_ros/bin/activate
-pip install ipython --upgrade
-pip install modular_client
-pip install jinja2
+sudo pip install ipython --upgrade
+sudo pip install modular_client
+sudo pip install jinja2
 ```
