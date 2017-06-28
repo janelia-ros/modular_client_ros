@@ -6,26 +6,37 @@ from std_msgs.msg import String
 from modular_client_ros.srv import *
 
 from modular_client import ModularClient
+import json
 
 
 dev = ModularClient()
 
 {% for function in functions %}
 def handle_{{ function['service_name']}}(request):
+{%- for parameter in function['parameters'] %}
+{%- if (parameter['message_type'] is equalto 'object[]') or (parameter['message_type'] is equalto 'any[]') or (parameter['message_type'] is equalto 'object') or (parameter['message_type'] is equalto 'any') %}
+    request.{{ parameter['name'] }} = json.loads(request.{{ parameter['name'] }})
+{%- endif %}
+{%- endfor %}
     response = dev.{{ function['service_name']}}({% for parameter in function['parameters'] %}request.{{ parameter['name'] }},{% endfor %})
-{% if function['result_info'] is defined %}
+{%- if function['result_info'] is defined %}
+{%- if function['result_info']['message_type'] is equalto 'null' %}
+    return {{ function['service_class'] }}Response('')
+{%- elif (function['result_info']['message_type'] is equalto 'object[]') or (function['result_info']['message_type'] is equalto 'any[]') or (function['result_info']['message_type'] is equalto 'object') or (function['result_info']['message_type'] is equalto 'any') %}
+    return {{ function['service_class'] }}Response(json.dumps(response))
+{%- else %}
     return {{ function['service_class'] }}Response(response)
-{% else %}
+{%- endif %}
+{%- else %}
     return {{ function['service_class'] }}Response()
-{% endif %}
+{%- endif %}
 {% endfor %}
 
 def {{ node_name }}():
     rospy.init_node('{{ node_name }}')
-
 {% for function in functions %}
     rospy.Service('~{{ function["firmware_name"] }}/{{ function["service_name"] }}', {{ function['service_class'] }}, handle_{{ function['service_name']}})
-{% endfor %}
+{%- endfor %}
 
     print("{{ node_name }} running.")
     rospy.spin()
