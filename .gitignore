@@ -1,8 +1,9 @@
 # Comment out these to save device specific files
+device/
 msg/
 srv/
 nodes/
-device/
+launch/
 CMakeLists.txt
 
 build/

@@ -1,0 +1,5 @@
+<launch>
+  <group ns="modular_client">
+    <node name="{{ node_name }}" pkg="modular_client_ros" type="{{ node_name }}.py" />
+  </group>
+</launch>

@@ -11,6 +11,7 @@ device_dir = 'device'
 api_dir = os.path.join(device_dir,'api')
 service_dir = 'srv'
 node_dir = 'nodes'
+launch_dir = 'launch'
 device_id_filename = 'device_id.json'
 
 message_filenames = []
@@ -18,19 +19,6 @@ service_filenames = []
 
 
 def initialize_directories():
-    # try:
-    #     os.makedirs(message_dir)
-    # except OSError:
-    #     pass
-    # try:
-    #     message_array = os.listdir(message_dir)
-    #     if len(message_array) > 0:
-    #         print("Removing old message files: {0} from {1}...\n".format(message_array,message_dir))
-    #         for message in message_array:
-    #             os.remove(os.path.join(message_dir,message))
-    # except OSError:
-    #     pass
-
     try:
         os.makedirs(service_dir)
     except OSError:
@@ -54,6 +42,19 @@ def initialize_directories():
             print("Removing old node files: {0} from {1}...\n".format(node_array,node_dir))
             for node in node_array:
                 os.remove(os.path.join(node_dir,node))
+    except OSError:
+        pass
+
+    try:
+        os.makedirs(launch_dir)
+    except OSError:
+        pass
+    try:
+        launch_array = os.listdir(launch_dir)
+        if len(launch_array) > 0:
+            print("Removing old launch files: {0} from {1}...\n".format(launch_array,launch_dir))
+            for launch in launch_array:
+                os.remove(os.path.join(launch_dir,launch))
     except OSError:
         pass
 
@@ -148,6 +149,15 @@ def main():
     with open(node_filename,'w') as fh:
         fh.write(node_template_render)
     os.chmod(node_filename,0o755)
+
+    # launch
+    template_filename = 'launch.txt'
+    launch_template = env.get_template(template_filename)
+    launch_template_render = launch_template.render(render_context)
+    launch_filename = os.path.join(launch_dir,'modular_client.launch')
+    print('Writing ' + launch_filename)
+    with open(launch_filename,'w') as fh:
+        fh.write(launch_template_render)
 
     # CMakeLists.txt
     render_context = {}

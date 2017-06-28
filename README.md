@@ -11,31 +11,14 @@ License:
 ## Running
 
 ```shell
-roscore
-```
-
-```shell
-rosrun modular_client_ros audio_controller.py
+roslaunch modular_client_ros modular_client.launch
 ```
 
 ```shell
 rosservice list
 ```
 
-```shell
-rosservice call /audio_controller/audio_controller/play_tone 5000 ALL
-```
-
-```shell
-rosservice call /audio_controller/audio_controller/stop
-```
-
 ## Setup ROS Package to Interface to a Specific Modular Device
-
-```shell
-source ~/virtualenvs/modular_client/bin/activate
-cd ~/catkin_ws/src/modular_client_ros
-```
 
 ### Save Modular Device API
 
