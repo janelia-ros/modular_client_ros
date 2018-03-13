@@ -16,6 +16,7 @@ roslaunch modular_client_ros modular_client.launch
 
 ```shell
 rosservice list
+rosservice call /modular_client/<MODULAR_DEVICE_NAME>/modular_server/get_device_id
 ```
 
 ## Setup ROS Package to Interface to a Specific Modular Device
@@ -59,6 +60,8 @@ cd ~/catkin_ws/src/modular_client_ros
 ```shell
 cd ~/catkin_ws/
 catkin_make
+source ./devel/setup.bash
+
 ```
 
 ## Installation
