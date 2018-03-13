@@ -23,6 +23,7 @@ rosservice list
 ### Cleanup Previous Modular Device API
 
 ```shell
+cd ~/catkin_ws/src/modular_client_ros
 git clean -xdf
 ```
 
@@ -34,6 +35,7 @@ If only one USB port on the host computer is connected to a modular
 device:
 
 ```shell
+cd ~/catkin_ws/src/modular_client_ros
 ./scripts/save_device_api
 ```
 
@@ -41,13 +43,22 @@ Specify modular device port if more than one USB port on the host
 computer is connected to a modular device:
 
 ```shell
+cd ~/catkin_ws/src/modular_client_ros
 ./scripts/save_device_api -p /dev/ttyACM0
 ```
 
 ### Customize ROS Package from Modular Device API
 
 ```shell
+cd ~/catkin_ws/src/modular_client_ros
 ./scripts/setup_package_using_api
+```
+
+### Compile ROS Package After Setup
+
+```shell
+cd ~/catkin_ws/
+catkin_make
 ```
 
 ## Installation
