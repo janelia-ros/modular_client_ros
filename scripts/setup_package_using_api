@@ -7,173 +7,223 @@ import inflection
 import copy
 
 
-device_dir = 'device'
-api_dir = os.path.join(device_dir,'api')
-service_dir = 'srv'
-node_dir = 'nodes'
-launch_dir = 'launch'
-device_id_filename = 'device_id.json'
+class PackageSetup:
 
-message_filenames = []
-service_filenames = []
+    def __init__(self):
+        self.device_dir = 'device'
+        self.api_dir = os.path.join(self.device_dir,'api')
+        self.service_dir = 'srv'
+        self.node_dir = 'nodes'
+        self.launch_dir = 'launch'
+        self.device_id_filename = 'device_id.json'
 
+        self.message_filenames = []
+        self.service_filenames = []
 
-def initialize_directories():
-    try:
-        os.makedirs(service_dir)
-    except OSError:
-        pass
-    try:
-        service_array = os.listdir(service_dir)
-        if len(service_array) > 0:
-            print("Removing old service files: {0} from {1}...\n".format(service_array,service_dir))
-            for service in service_array:
-                os.remove(os.path.join(service_dir,service))
-    except OSError:
-        pass
+    def get_api_array(self):
+        api_array = []
+        try:
+            api_array = os.listdir(self.api_dir)
+        except OSError:
+            pass
+        if len(api_array) > 0:
+            print('\nAPI found: {0} in {1}\n'.format(api_array,self.api_dir))
+        else:
+            print('\nNo API found in {0}! Connect modular device and run save_device_api.\n'.format(self.api_dir))
+            return
+        return api_array
 
-    try:
-        os.makedirs(node_dir)
-    except OSError:
-        pass
-    try:
-        node_array = os.listdir(node_dir)
-        if len(node_array) > 0:
-            print("Removing old node files: {0} from {1}...\n".format(node_array,node_dir))
-            for node in node_array:
-                os.remove(os.path.join(node_dir,node))
-    except OSError:
-        pass
+    def initialize_directories(self):
+        try:
+            os.makedirs(self.service_dir)
+        except OSError:
+            pass
+        try:
+            service_array = os.listdir(self.service_dir)
+            if len(service_array) > 0:
+                print("Removing old service files: {0} from {1}...\n".format(service_array,self.service_dir))
+                for service in service_array:
+                    os.remove(os.path.join(self.service_dir,service))
+        except OSError:
+            pass
 
-    try:
-        os.makedirs(launch_dir)
-    except OSError:
-        pass
-    try:
-        launch_array = os.listdir(launch_dir)
-        if len(launch_array) > 0:
-            print("Removing old launch files: {0} from {1}...\n".format(launch_array,launch_dir))
-            for launch in launch_array:
-                os.remove(os.path.join(launch_dir,launch))
-    except OSError:
-        pass
+        try:
+            os.makedirs(self.node_dir)
+        except OSError:
+            pass
+        try:
+            node_array = os.listdir(self.node_dir)
+            if len(node_array) > 0:
+                print("Removing old node files: {0} from {1}...\n".format(node_array,self.node_dir))
+                for node in node_array:
+                    os.remove(os.path.join(self.node_dir,node))
+        except OSError:
+            pass
 
-def main():
-    api_array = []
-    try:
-        api_array = os.listdir(api_dir)
-    except OSError:
-        pass
-    if len(api_array) > 0:
-        print('\nAPI found: {0} in {1}\n'.format(api_array,api_dir))
-    else:
-        print('\nNo API found in {0}! Connect modular device and run save_device_api.\n'.format(api_dir))
-        return
-    env = Environment(
-        loader=FileSystemLoader('./templates'),
-    )
+        try:
+            os.makedirs(self.launch_dir)
+        except OSError:
+            pass
+        try:
+            launch_array = os.listdir(self.launch_dir)
+            if len(launch_array) > 0:
+                print("Removing old launch files: {0} from {1}...\n".format(launch_array,self.launch_dir))
+                for launch in launch_array:
+                    os.remove(os.path.join(self.launch_dir,launch))
+        except OSError:
+            pass
 
-    initialize_directories()
-
-    # srv
-    template_filename = 'srv.txt'
-    service_template = env.get_template(template_filename)
-    parameters = {}
-    functions = []
-    for api_filename in api_array:
-        api = {}
-        with open(os.path.join(api_dir,api_filename),'r') as fh:
-            api = json.loads(fh.read())
-        if 'result' in api:
-            api = api['result']
-        for parameter in api['parameters']:
-            parameter_copy = copy.copy(parameter)
-            parameter_name = parameter_copy.pop('name')
-            try:
-                array_element_type = parameter_copy['array_element_type']
-                parameter_copy['message_type'] = array_element_type + '[]'
-            except KeyError:
-                parameter_copy['message_type'] = parameter_copy['type']
-            parameters[parameter_name] = parameter_copy
-        for function in api['functions']:
-            function_copy = copy.copy(function)
-            if 'result_info' in function_copy:
+    def from_api_append_to_parameters(self, api, parameters):
+        if 'parameters' in api:
+            for parameter in api['parameters']:
+                parameter_copy = copy.copy(parameter)
+                parameter_name = parameter_copy.pop('name')
                 try:
-                    array_element_type = function_copy['result_info']['array_element_type']
-                    function_copy['result_info']['message_type'] = array_element_type + '[]'
+                    array_element_type = parameter_copy['array_element_type']
+                    parameter_copy['message_type'] = array_element_type + '[]'
                 except KeyError:
-                    function_copy['result_info']['message_type'] = function_copy['result_info']['type']
-            function_parameters = []
-            for parameter in function['parameters']:
-                function_parameter = {}
-                function_parameter['name'] = parameter
-                function_parameter['type'] = parameters[parameter]['type']
-                function_parameter['message_type'] = parameters[parameter]['message_type']
-                try:
-                    function_parameter['units'] = parameters[parameter]['units']
-                except KeyError:
-                    pass
-                function_parameters.append(function_parameter)
-            function_copy['parameters'] = function_parameters
-            service_template_render = service_template.render(function_copy)
-            service_name = inflection.underscore(function_copy['name'])
-            function_copy['service_name'] = service_name
-            service_class = inflection.camelize(function_copy['name'],True)
-            function_copy['service_class'] = service_class
-            service_filename = service_class + '.srv'
-            service_filenames.append(service_filename)
-            service_filename = os.path.join(service_dir,service_filename)
-            print('Writing ' + service_filename)
-            with open(service_filename,'w') as fh:
-                fh.write(service_template_render)
+                    parameter_copy['message_type'] = parameter_copy['type']
+                parameters[parameter_name] = parameter_copy
+
+    def from_api_append_to_functions(self, api, functions, parameters, firmware_name):
+        if 'functions' in api:
+            for function in api['functions']:
+                function_copy = copy.copy(function)
+                if 'result_info' in function_copy:
+                    try:
+                        array_element_type = function_copy['result_info']['array_element_type']
+                        function_copy['result_info']['message_type'] = array_element_type + '[]'
+                    except KeyError:
+                        function_copy['result_info']['message_type'] = function_copy['result_info']['type']
+                function_parameters = []
+                if 'parameters' in function:
+                    for parameter in function['parameters']:
+                        function_parameter = {}
+                        function_parameter['name'] = parameter
+                        function_parameter['type'] = parameters[parameter]['type']
+                        function_parameter['message_type'] = parameters[parameter]['message_type']
+                        try:
+                            function_parameter['units'] = parameters[parameter]['units']
+                        except KeyError:
+                            pass
+                        function_parameters.append(function_parameter)
+                function_copy['parameters'] = function_parameters
+                service_template_render = self.service_template.render(function_copy)
+                service_name = inflection.underscore(function_copy['name'])
+                function_copy['service_name'] = service_name
+                service_class = inflection.camelize(function_copy['name'],True)
+                function_copy['service_class'] = service_class
+                service_filename = service_class + '.srv'
+                self.service_filenames.append(service_filename)
+                service_filename = os.path.join(self.service_dir,service_filename)
+                print('Writing ' + service_filename)
+                with open(service_filename,'w') as fh:
+                    fh.write(service_template_render)
+                function_copy['firmware_name'] = inflection.underscore(firmware_name)
+                functions.append(function_copy)
+
+    def from_api_append_to_callbacks(self, api, callbacks, firmware_name):
+        if 'callbacks' in api:
+            for callback in api['callbacks']:
+                callback_copy = copy.copy(callback)
+                # service_template_render = self.service_template.render(callback_copy)
+                # service_name = inflection.underscore(callback_copy['name'])
+                # callback_copy['service_name'] = service_name
+                # service_class = inflection.camelize(callback_copy['name'],True)
+                # callback_copy['service_class'] = service_class
+                # service_filename = service_class + '.srv'
+                # self.service_filenames.append(service_filename)
+                # service_filename = os.path.join(self.service_dir,service_filename)
+                # print('Writing ' + service_filename)
+                # with open(service_filename,'w') as fh:
+                #     fh.write(self.service_template_render)
+                # callback_copy['firmware_name'] = inflection.underscore(firmware_name)
+                # callbacks.append(callback_copy)
+
+    def render_services(self, env, api_array, functions, callbacks):
+        template_filename = 'srv.txt'
+        self.service_template = env.get_template(template_filename)
+        parameters = {}
+        for api_filename in api_array:
             firmware_name = api_filename.replace('.json','')
-            function_copy['firmware_name'] = inflection.underscore(firmware_name)
-            functions.append(function_copy)
+            api = {}
+            with open(os.path.join(self.api_dir,api_filename),'r') as fh:
+                api = json.loads(fh.read())
+            if 'result' in api:
+                api = api['result']
+            self.from_api_append_to_parameters(api,parameters)
+            self.from_api_append_to_functions(api,functions,parameters,firmware_name)
+            self.from_api_append_to_callbacks(api,callbacks,firmware_name)
 
-    # print(json.dumps(parameters,indent=2))
-    # print(json.dumps(functions,indent=2))
-    # nodes
-    with open(os.path.join(device_dir,device_id_filename),'r') as fh:
-        device_id = json.loads(fh.read())
-    if 'result' in device_id:
-        device_id = device_id['result']
-    node_name = device_id['name']
-    render_context = {}
-    render_context['node_name'] = node_name
-    render_context['functions'] = functions
-    template_filename = 'node.txt'
-    node_template = env.get_template(template_filename)
-    node_template_render = node_template.render(render_context)
-    node_filename = os.path.join(node_dir,node_name+'.py')
-    print('Writing ' + node_filename)
-    with open(node_filename,'w') as fh:
-        fh.write(node_template_render)
-    os.chmod(node_filename,0o755)
+        # print(json.dumps(parameters,indent=2))
+        # print(json.dumps(functions,indent=2))
+        # print(json.dumps(callbacks,indent=2))
 
-    # launch
-    template_filename = 'launch.txt'
-    launch_template = env.get_template(template_filename)
-    launch_template_render = launch_template.render(render_context)
-    launch_filename = os.path.join(launch_dir,'modular_client.launch')
-    print('Writing ' + launch_filename)
-    with open(launch_filename,'w') as fh:
-        fh.write(launch_template_render)
+    def render_node(self, env, functions, callbacks):
+        with open(os.path.join(self.device_dir,self.device_id_filename),'r') as fh:
+            device_id = json.loads(fh.read())
+        if 'result' in device_id:
+            device_id = device_id['result']
+        node_name = device_id['name']
+        render_context = {}
+        render_context['node_name'] = node_name
+        render_context['functions'] = functions
+        template_filename = 'node.txt'
+        node_template = env.get_template(template_filename)
+        node_template_render = node_template.render(render_context)
+        node_filename = os.path.join(self.node_dir,node_name+'.py')
+        print('Writing ' + node_filename)
+        with open(node_filename,'w') as fh:
+            fh.write(node_template_render)
+        os.chmod(node_filename,0o755)
+        return node_name
 
-    # CMakeLists.txt
-    render_context = {}
-    render_context['message_filenames'] = message_filenames
-    render_context['service_filenames'] = service_filenames
+    def render_launch(self, env, node_name):
+        template_filename = 'launch.txt'
+        launch_template = env.get_template(template_filename)
+        render_context = {}
+        render_context['node_name'] = node_name
+        launch_template_render = launch_template.render(render_context)
+        launch_filename = os.path.join(self.launch_dir,'modular_client.launch')
+        print('Writing ' + launch_filename)
+        with open(launch_filename,'w') as fh:
+            fh.write(launch_template_render)
 
-    template_filename = 'CMakeLists.txt'
-    template = env.get_template(template_filename)
+    def render_cmake(self, env):
+        render_context = {}
+        render_context['message_filenames'] = self.message_filenames
+        render_context['service_filenames'] = self.service_filenames
 
-    template_render = template.render(render_context)
+        template_filename = 'CMakeLists.txt'
+        template = env.get_template(template_filename)
 
-    print('Writing ' + template_filename + '\n')
-    with open(template_filename,'w') as fh:
-        fh.write(template_render)
+        template_render = template.render(render_context)
+
+        print('Writing ' + template_filename + '\n')
+        with open(template_filename,'w') as fh:
+            fh.write(template_render)
+
+    def main(self):
+        api_array = self.get_api_array()
+
+        self.initialize_directories()
+
+        env = Environment(
+            loader=FileSystemLoader('./templates'),
+        )
+        functions = []
+        callbacks = []
+
+        self.render_services(env,api_array,functions,callbacks)
+
+        node_name = self.render_node(env,functions,callbacks)
+
+        self.render_launch(env,node_name)
+
+        self.render_cmake(env)
+
 
 
 if __name__ == '__main__':
-    main()
-
+    package_setup = PackageSetup()
+    package_setup.main()

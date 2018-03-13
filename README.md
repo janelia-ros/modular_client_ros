@@ -20,6 +20,12 @@ rosservice list
 
 ## Setup ROS Package to Interface to a Specific Modular Device
 
+### Cleanup Previous Modular Device API
+
+```shell
+git clean -xdf
+```
+
 ### Save Modular Device API
 
 Plug modular device into USB port.
@@ -40,6 +46,10 @@ computer is connected to a modular device:
 
 ### Customize ROS Package from Modular Device API
 
+```shell
+./scripts/setup_package_using_api
+```
+
 ## Installation
 
 ### Setup ROS Workspace
@@ -58,4 +68,18 @@ git clone https://github.com/janelia-ros/modular_client_ros.git
 sudo pip install ipython --upgrade
 sudo pip install modular_client
 sudo pip install jinja2
+```
+
+### Updating Python Dependencies
+
+#### Python 3
+
+```shell
+sudo -H python3 -m pip install modular_client --upgrade
+```
+
+#### Python 2
+
+```shell
+sudo -H python -m pip install modular_client --upgrade
 ```
