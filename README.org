@@ -1,0 +1,97 @@
+#+TITLE: modular_client_ros
+#+AUTHOR: Peter Polidoro
+#+EMAIL: peterpolidoro@gmail.com
+
+* Package Information
+  - Author :: Peter Polidoro
+  - License :: BSD
+
+* Running
+
+  #+BEGIN_SRC sh
+roslaunch modular_client_ros modular_client.launch
+  #+END_SRC
+
+  #+BEGIN_SRC sh
+rosservice list
+rosservice call /modular_client/<MODULAR_DEVICE_NAME>/modular_server/get_device_id
+  #+END_SRC
+
+* Setup ROS Package to Interface to a Specific Modular Device
+
+** Cleanup Previous Modular Device API
+
+   #+BEGIN_SRC sh
+cd ~/catkin_ws/src/modular_client_ros
+git clean -xdf
+   #+END_SRC
+
+** Save Modular Device API
+
+   Plug modular device into USB port.
+
+   If only one USB port on the host computer is connected to a modular
+   device:
+
+   #+BEGIN_SRC sh
+cd ~/catkin_ws/src/modular_client_ros
+./scripts/save_device_api
+   #+END_SRC
+
+   Specify modular device port if more than one USB port on the host
+   computer is connected to a modular device:
+
+   #+BEGIN_SRC sh
+cd ~/catkin_ws/src/modular_client_ros
+./scripts/save_device_api -p /dev/ttyACM0
+   #+END_SRC
+
+** Customize ROS Package from Modular Device API
+
+   #+BEGIN_SRC sh
+cd ~/catkin_ws/src/modular_client_ros
+./scripts/setup_package_using_api
+   #+END_SRC
+
+** Compile ROS Package After Setup
+
+   #+BEGIN_SRC sh
+cd ~/catkin_ws/
+catkin_make
+source ./devel/setup.bash
+
+   #+END_SRC
+
+* Installation
+
+** Setup ROS Workspace
+
+   #+BEGIN_SRC sh
+mkdir -p ~/catkin_ws/src
+cd ~/catkin_ws/
+catkin_make
+cd ~/catkin_ws/src
+git clone https://github.com/janelia-ros/modular_client_ros.git
+   #+END_SRC
+
+** Install Python Dependencies
+
+   #+BEGIN_SRC sh
+sudo pip install ipython --upgrade
+sudo pip install modular_client
+sudo pip install jinja2
+   #+END_SRC
+
+** Updating Python Dependencies
+
+*** Python 3
+
+    #+BEGIN_SRC sh
+sudo -H python3 -m pip install modular_client --upgrade
+    #+END_SRC
+
+*** Python 2
+
+    #+BEGIN_SRC sh
+sudo -H python -m pip install modular_client --upgrade
+    #+END_SRC
